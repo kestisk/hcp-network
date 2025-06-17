@@ -1,6 +1,6 @@
 import React from "react";
 
-const InfoPanel = ({ details, allNodes }) => {
+const InfoPanel = ({details, allNodes}) => {
     if (!details) {
         return (
             <div className="p-4 text-center text-gray-500 bg-gray-50 rounded-lg h-full flex flex-col justify-center">
@@ -40,7 +40,8 @@ const InfoPanel = ({ details, allNodes }) => {
         <div className="p-5 bg-white rounded-xl shadow-md border border-gray-200 h-full flex flex-col">
             <h3 className="text-lg font-bold text-blue-700 mb-4">HCP Profile</h3>
             <div className="flex items-center gap-4 mb-6">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-2xl">
+                <div
+                    className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-2xl">
                     {details.name?.substring(0, 2).toUpperCase() || "N/A"}
                 </div>
                 <div>
@@ -61,7 +62,8 @@ const InfoPanel = ({ details, allNodes }) => {
                     <h4 className="font-semibold text-gray-600 text-sm mb-2">Publications</h4>
                     <ul className="space-y-1">
                         {details.publications.map((pub, i) => (
-                            <li key={i} className="text-xs text-gray-700 p-2 bg-gray-50 rounded-md truncate" title={pub}>
+                            <li key={i} className="text-xs text-gray-700 p-2 bg-gray-50 rounded-md truncate"
+                                title={pub}>
                                 {pub}
                             </li>
                         ))}

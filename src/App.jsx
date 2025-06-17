@@ -1,13 +1,43 @@
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, {useEffect, useState, useRef, useCallback} from "react";
 import ForceGraph2D from "react-force-graph-2d";
 import InfoPanel from "./infoPanel.jsx";
 
 const mockHCPs = [
-    { id: "hcp-1", name: "Dr. Emily Carter", education: "Stanford University School of Medicine", experience: "Chief of Cardiology at General Hospital", publications: ["The Future of Heart Disease Treatment", "Advanced Cardiac Imaging Techniques", "Genetics in Cardiology"] },
-    { id: "hcp-2", name: "Dr. Ben Zhao", education: "Johns Hopkins University", experience: "Senior Cardiologist at City Clinic", publications: ["Advanced Cardiac Imaging Techniques", "Case Studies in Myocardial Infarction"] },
-    { id: "hcp-3", name: "Dr. Sofia Reyes", education: "Harvard Medical School", experience: "Pediatric Cardiologist at Children's Hospital", publications: ["Congenital Heart Defects in Newborns", "The Future of Heart Disease Treatment"] },
-    { id: "hcp-4", name: "Dr. Kenji Tanaka", education: "University of Tokyo", experience: "Researcher at The Heart Institute", publications: ["Genetics in Cardiology", "Advanced Cardiac Imaging Techniques"] },
-    { id: "hcp-5", name: "Dr. Maria Garcia", education: "University of Barcelona", experience: "Cardiologist at Mercy West", publications: ["Preventive Cardiology Strategies"] },
+    {
+        id: "hcp-1",
+        name: "Dr. Emily Carter",
+        education: "Stanford University School of Medicine",
+        experience: "Chief of Cardiology at General Hospital",
+        publications: ["The Future of Heart Disease Treatment", "Advanced Cardiac Imaging Techniques", "Genetics in Cardiology"]
+    },
+    {
+        id: "hcp-2",
+        name: "Dr. Ben Zhao",
+        education: "Johns Hopkins University",
+        experience: "Senior Cardiologist at City Clinic",
+        publications: ["Advanced Cardiac Imaging Techniques", "Case Studies in Myocardial Infarction"]
+    },
+    {
+        id: "hcp-3",
+        name: "Dr. Sofia Reyes",
+        education: "Harvard Medical School",
+        experience: "Pediatric Cardiologist at Children's Hospital",
+        publications: ["Congenital Heart Defects in Newborns", "The Future of Heart Disease Treatment"]
+    },
+    {
+        id: "hcp-4",
+        name: "Dr. Kenji Tanaka",
+        education: "University of Tokyo",
+        experience: "Researcher at The Heart Institute",
+        publications: ["Genetics in Cardiology", "Advanced Cardiac Imaging Techniques"]
+    },
+    {
+        id: "hcp-5",
+        name: "Dr. Maria Garcia",
+        education: "University of Barcelona",
+        experience: "Cardiologist at Mercy West",
+        publications: ["Preventive Cardiology Strategies"]
+    },
 ];
 const createMockLinks = (hcps) => {
     const links = {};
@@ -16,18 +46,17 @@ const createMockLinks = (hcps) => {
             const shared = a.publications.filter((p) => b.publications.includes(p));
             if (shared.length) {
                 const key = [a.id, b.id].sort().join("-");
-                links[key] = { source: a.id, target: b.id, sharedPublications: shared };
+                links[key] = {source: a.id, target: b.id, sharedPublications: shared};
             }
         })
     );
     return Object.values(links);
 };
-const allMockData = { nodes: mockHCPs, links: createMockLinks(mockHCPs) };
-
+const allMockData = {nodes: mockHCPs, links: createMockLinks(mockHCPs)};
 
 
 export default function App() {
-    const [graphData, setGraphData] = useState({ nodes: [], links: [] });
+    const [graphData, setGraphData] = useState({nodes: [], links: []});
     const [searchInput, setSearchInput] = useState("");
     const [centeredNode, setCenteredNode] = useState(null);
     const [detailedInfo, setDetailedInfo] = useState(null);
@@ -37,7 +66,7 @@ export default function App() {
         const term = searchInput.trim().toLowerCase();
         if (!term) {
             setCenteredNode(null);
-            setGraphData({ nodes: [], links: [] });
+            setGraphData({nodes: [], links: []});
             setDetailedInfo(null);
             return;
         }
@@ -49,32 +78,47 @@ export default function App() {
 
     useEffect(() => {
         if (!centeredNode) {
-            setGraphData({ nodes: [], links: [] });
+            setGraphData({nodes: [], links: []});
             return;
         }
-        const ids = new Set([centeredNode.id]);
-        const direct = allMockData.links.filter(
-            (l) => l.source === centeredNode.id || l.target === centeredNode.id
-        );
-        direct.forEach((l) => {
-            ids.add(l.source);
-            ids.add(l.target);
+
+        const visibleNodeIds = new Set([centeredNode.id]);
+
+        const directLinks = allMockData.links.filter(link => {
+            const sourceId = typeof link.source === "string" ? link.source : link.source.id;
+            const targetId = typeof link.target === "string" ? link.target : link.target.id;
+
+            return sourceId === centeredNode.id || targetId === centeredNode.id;
         });
-        const nodes = allMockData.nodes.filter((n) => ids.has(n.id));
-        const links = allMockData.links.filter(
-            (l) => ids.has(l.source) && ids.has(l.target)
-        );
-        setGraphData({ nodes, links });
+
+        directLinks.forEach(link => {
+            const sourceId = typeof link.source === "string" ? link.source : link.source.id;
+            const targetId = typeof link.target === "string" ? link.target : link.target.id;
+
+            visibleNodeIds.add(sourceId);
+            visibleNodeIds.add(targetId);
+        });
+
+        const visibleNodes = allMockData.nodes.filter(node => visibleNodeIds.has(node.id));
+        const visibleLinks = allMockData.links.filter(link => {
+            const sourceId = typeof link.source === "string" ? link.source : link.source.id;
+            const targetId = typeof link.target === "string" ? link.target : link.target.id;
+
+            return visibleNodeIds.has(sourceId) && visibleNodeIds.has(targetId);
+        });
+
+        setGraphData({nodes: visibleNodes, links: visibleLinks});
         setDetailedInfo(centeredNode);
 
         setTimeout(() => {
-            const node = nodes.find((n) => n.id === centeredNode.id);
-            if (graphRef.current && node) {
+            const node = visibleNodes.find(n => n.id === centeredNode.id);
+            if (graphRef.current && node?.x !== undefined && node?.y !== undefined) {
                 graphRef.current.centerAt(node.x, node.y, 1000);
                 graphRef.current.zoom(5, 500);
             }
         }, 100);
     }, [centeredNode]);
+
 
     const handleNodeClick = useCallback((n) => setDetailedInfo(n), []);
     const handleLinkClick = useCallback((l) => setDetailedInfo(l), []);
@@ -121,7 +165,7 @@ export default function App() {
                         </button>
                     </div>
                     <div className="flex-1 overflow-y-auto">
-                        <InfoPanel details={detailedInfo} allNodes={allMockData.nodes} />
+                        <InfoPanel details={detailedInfo} allNodes={allMockData.nodes}/>
                     </div>
                 </div>
             </div>
@@ -140,7 +184,8 @@ export default function App() {
                     d3ForceManyBody={-250}
                 />
                 {graphData.nodes.length === 0 && (
-                    <div className="absolute inset-0 flex items-center justify-center text-gray-500 text-xl pointer-events-none">
+                    <div
+                        className="absolute inset-0 flex items-center justify-center text-gray-500 text-xl pointer-events-none">
                         Please search for an HCP to begin.
                     </div>
                 )}
